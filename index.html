@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href='styles.css' />
+</head>
+<body>
+    
+    <input type="button" id="get_file" value="Load Triples" onclick="document.getElementById('fileInput').click()">
+    <input type="file" accept=".ttl" id="fileInput" style="display: none;">
+    <br>
+    
+    <div id="queries">
+        <input type="button" id="query_1" value="Get 100 triples">
+        <input type="button" id="query_2" value="Get adjacent elements">
+        <input type="button" id="query_3" value="Count class memberships">
+    </div>
+
+    <!-- Executed query -->
+    <p id="query"></p>
+    <div id="query-results"></div>
+
+    <!-- Log -->
+    <ul id="log"></ul>
+
+    <script src="https://rdf.js.org/comunica-browser/versions/v2/engines/query-sparql/comunica-browser.js"></script>
+    <script type="module" src='build.js'></script>
+    <script>
+
+
+    </script>
+</body>
+</html>
