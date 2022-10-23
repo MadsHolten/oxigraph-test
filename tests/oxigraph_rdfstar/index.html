@@ -28,6 +28,7 @@
     <div id="queries">
         <input type="button" id="query_1" value="Give spaces a creation time">
         <input type="button" id="query_2" value="Get creation time of spaces">
+        <input type="button" id="query_3" value="Get creation time of spaces as JSON-LD">
         <input type="button" id="download" value="Download result">
         <p id="query-result-time"></p>
     </div>
@@ -39,8 +40,7 @@
     <!-- Log -->
     <ul id="log"></ul>
 
-    <script src="https://unpkg.com/n3/browser/n3.min.js"></script>
-    <script src="https://rdf.js.org/comunica-browser/versions/v2/engines/query-sparql/comunica-browser.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsonld@1.0.0/dist/jsonld.min.js"></script>
     <script type="module" src='build.js'></script>
     <script>
 

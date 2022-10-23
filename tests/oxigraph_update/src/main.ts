@@ -1,8 +1,6 @@
 import init, * as oxigraph from 'oxigraph/web.js';
 import { getFileContent, appendToLog, downloadStringAsFile } from './helpers';
 
-declare let N3; // Imported in index.html
-
 const baseURI = "https://web-bim/resources/";
 
 let store: oxigraph.Store;

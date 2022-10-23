@@ -1,7 +1,7 @@
 import init, * as oxigraph from 'oxigraph/web.js';
 import { getFileContent, appendToLog, downloadStringAsFile } from './helpers';
 
-declare let N3; // Imported in index.html
+declare let jsonld; // Imported in index.html
 
 const baseURI = "https://web-bim/resources/";
 
@@ -60,6 +60,19 @@ WHERE {
     await executeQuery(query, ["s", "created"], "Q2");
 });
 
+document.getElementById('query_3')!.addEventListener('click', async (event: any) => {
+    const query = `PREFIX bot: <https://w3id.org/bot#> 
+PREFIX ex: <https://ex.com/> 
+
+CONSTRUCT{
+    <<?s a bot:Space>> ex:created ?created
+}
+WHERE { 
+    <<?s a bot:Space>> ex:created ?created
+}`;
+    await executeConstructQuery(query, "Q3");
+});
+
 document.getElementById('download')!.addEventListener('click', async (event: any) => {
 
     const t1 = new Date();
@@ -106,6 +119,33 @@ async function executeInsertQuery(query: string, id: string){
         queryElement.style.visibility = "visible";
         queryElement.innerHTML = "<pre>" + escapeHtml(query) + "</pre>";
     }
+
+}
+
+async function executeConstructQuery(query: string, id: string): Promise<any>{
+
+    const t1 = new Date();
+    const quads = store.query(query);
+    const t2 = new Date();
+    appendToLog(`Ran ${id} | ${t2.getTime()-t1.getTime()}ms`);
+
+    // const tempStore = new oxigraph.Store(quads);
+    // const nquads: string = tempStore.dump("application/n-quads", undefined);
+    const doc = await jsonld.fromRDF(quads);
+
+    const queryElement = document.getElementById("query");
+    if(queryElement){
+        queryElement.style.visibility = "visible";
+        queryElement.innerHTML = "<pre>" + escapeHtml(query) + "</pre>";
+    }
+    
+    const qResElement = document.getElementById("query-results");
+    if(qResElement){
+        qResElement.style.visibility = "visible";
+        qResElement.innerHTML = "<pre>" + escapeHtml(JSON.stringify(doc, null, "   ")) + "</pre>";
+    }
+
+    return doc;
 
 }
 
