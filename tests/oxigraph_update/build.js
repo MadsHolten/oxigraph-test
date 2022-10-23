@@ -1252,33 +1252,6 @@ async function init(input) {
     return finalizeInit(instance, module);
 }
 
-function comunicaGetQuery(query, source) {
-    return __awaiter(this, void 0, void 0, function () {
-        var bindings, engine, bindingsStream;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    bindings = [];
-                    engine = new Comunica.QueryEngine();
-                    return [4 /*yield*/, engine.queryBindings(query, { sources: [source] })];
-                case 1:
-                    bindingsStream = _a.sent();
-                    return [2 /*return*/, new Promise(function (resolve, reject) {
-                            bindingsStream.on('data', function (binding) {
-                                bindings.push(binding);
-                            });
-                            bindingsStream.on('end', function () {
-                                resolve(bindings);
-                            });
-                            bindingsStream.on('error', function (error) {
-                                reject(error);
-                            });
-                        })];
-            }
-        });
-    });
-}
-
 function getFileContent(file) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -1299,6 +1272,21 @@ function getFileContent(file) {
         });
     });
 }
+function downloadStringAsFile(filename, text) {
+    return __awaiter(this, void 0, void 0, function () {
+        var element;
+        return __generator(this, function (_a) {
+            element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            return [2 /*return*/];
+        });
+    });
+}
 
 function appendToLog(text) {
     console.log(text);
@@ -1310,72 +1298,19 @@ function appendToLog(text) {
     log.appendChild(entry);
 }
 
-function n3LoadTTL(triples, store, batchSize) {
-    if (batchSize === void 0) { batchSize = 1000; }
-    return __awaiter(this, void 0, void 0, function () {
-        var currentBatch, promises, counter;
-        var _this = this;
-        return __generator(this, function (_a) {
-            currentBatch = [];
-            promises = [];
-            counter = 0;
-            return [2 /*return*/, new Promise(function (resolve, reject) {
-                    var parser = new N3.Parser();
-                    parser.parse(triples, function (error, quad, prefixes) { return __awaiter(_this, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    if (error) {
-                                        reject(error);
-                                    }
-                                    if (!quad) return [3 /*break*/, 1];
-                                    if (counter % batchSize == 0) {
-                                        // Add the previous batch to store
-                                        if (currentBatch.length) {
-                                            promises.push(store.addQuads(currentBatch));
-                                        }
-                                        // Start a new batch
-                                        currentBatch = [quad];
-                                    }
-                                    else {
-                                        // Push to current batch
-                                        currentBatch.push(quad);
-                                    }
-                                    counter++;
-                                    return [3 /*break*/, 3];
-                                case 1:
-                                    // Add the last batch to store
-                                    if (currentBatch.length) {
-                                        promises.push(store.addQuads(currentBatch));
-                                    }
-                                    // Wait for all loads to finish
-                                    return [4 /*yield*/, Promise.all(promises)];
-                                case 2:
-                                    // Wait for all loads to finish
-                                    _a.sent();
-                                    // Resolve prefixes
-                                    resolve(prefixes);
-                                    _a.label = 3;
-                                case 3: return [2 /*return*/];
-                            }
-                        });
-                    }); });
-                })];
-        });
-    });
-}
-
 var baseURI = "https://web-bim/resources/";
-var oxiStore;
-var n3Store;
+var store;
+var fileName = "";
 // HANDLE FILE UPLOAD
 document.getElementById('fileInput').addEventListener('change', function (event) { return __awaiter(void 0, void 0, void 0, function () {
-    var fileList, file, t1, triples, t2, t3, t4, t5, t6, qEl;
+    var fileList, file, t1, triples, t2, t3, t4, qEl;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 fileList = event.target.files;
                 file = fileList[0];
+                fileName = file.name;
+                console.log(file);
                 t1 = new Date();
                 return [4 /*yield*/, getFileContent(file)];
             case 1:
@@ -1383,19 +1318,12 @@ document.getElementById('fileInput').addEventListener('change', function (event)
                 t2 = new Date();
                 appendToLog("Read file content | ".concat(t2.getTime() - t1.getTime(), "ms"));
                 t3 = new Date();
-                return [4 /*yield*/, oxiStore.load(triples, "text/turtle", baseURI, undefined)];
+                return [4 /*yield*/, store.load(triples, "text/turtle", baseURI, undefined)];
             case 2:
                 _a.sent();
                 t4 = new Date();
                 appendToLog("Loaded triples in Oxigraph | ".concat(t4.getTime() - t3.getTime(), "ms"));
-                t5 = new Date();
-                return [4 /*yield*/, n3LoadTTL(triples, n3Store)];
-            case 3:
-                _a.sent();
-                t6 = new Date();
-                appendToLog("Loaded triples in N3 | ".concat(t6.getTime() - t5.getTime(), "ms"));
-                appendToLog("Store size Oxigraph: ".concat(oxiStore.size));
-                appendToLog("Store size N3: ".concat(n3Store.size));
+                appendToLog("Store size: ".concat(store.size));
                 qEl = document.getElementById("queries");
                 if (qEl)
                     qEl.style.visibility = "visible";
@@ -1408,8 +1336,8 @@ document.getElementById('query_1').addEventListener('click', function (event) { 
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                query = "SELECT * WHERE { ?s ?p ?o } LIMIT 100";
-                return [4 /*yield*/, executeQuery(query, ["s", "p", "o"], "Q1")];
+                query = "PREFIX bot: <https://w3id.org/bot#> \nPREFIX ex: <https://ex.com/> \n\nINSERT{\n        ?s a ex:Giraffe\n}\nWHERE { \n    ?s a bot:Space\n}";
+                return [4 /*yield*/, executeInsertQuery(query, "Q1")];
             case 1:
                 _a.sent();
                 return [2 /*return*/];
@@ -1421,81 +1349,64 @@ document.getElementById('query_2').addEventListener('click', function (event) { 
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                query = "PREFIX ifc: <http://ifcowl.openbimstandards.org/IFC2X3_Final#> \nPREFIX bot: <https://w3id.org/bot#> \nPREFIX inst: <https://example.com/>\n\nSELECT ?space (group_concat(?adjElURI; separator=\", \") AS ?adjacent)\nWHERE {\n    ?space a bot:Space ; \n        bot:adjacentElement ?adjEl\n    BIND(str(?adjEl) AS ?adjElURI)\n} GROUP BY ?space";
-                return [4 /*yield*/, executeQuery(query, ["space", "adjacent"], "Q2")];
+                query = "PREFIX ex: <https://ex.com/> \n\nSELECT ?g\nWHERE { \n    ?g a ex:Giraffe\n}";
+                return [4 /*yield*/, executeQuery(query, ["g"], "Q2")];
             case 1:
                 _a.sent();
                 return [2 /*return*/];
         }
     });
 }); });
-document.getElementById('query_3').addEventListener('click', function (event) { return __awaiter(void 0, void 0, void 0, function () {
-    var query;
+document.getElementById('download').addEventListener('click', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    var t1, triples, t2;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                query = "PREFIX ifc: <http://ifcowl.openbimstandards.org/IFC2X3_Final#>\n\nSELECT ?class (COUNT(?s) AS ?instances)\nWHERE { \n    ?s a ?class\n} \nGROUP BY ?class \nORDER BY DESC(?instances)";
-                return [4 /*yield*/, executeQuery(query, ["class", "instances"], "Q3")];
-            case 1:
-                _a.sent();
-                return [2 /*return*/];
-        }
-    });
-}); });
-document.getElementById('query_4').addEventListener('click', function (event) { return __awaiter(void 0, void 0, void 0, function () {
-    var query;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \nPREFIX ex: <https://example.com/> \nPREFIX ifc: <http://ifcowl.openbimstandards.org/IFC2X3_Final#>\n\nSELECT ?pset ?psetName (GROUP_CONCAT(?propName) AS ?properties)\nWHERE { \n    ?pset a ifc:IfcPropertySet ;\n            rdfs:label ?psetName ;\n            ex:hasProperty ?property .\n    ?property rdfs:label ?propName\n} GROUP BY ?pset ?psetName";
-                return [4 /*yield*/, executeQuery(query, ["pset", "psetName", "properties"], "Q4")];
-            case 1:
-                _a.sent();
-                return [2 /*return*/];
-        }
-    });
-}); });
-document.getElementById('query_5').addEventListener('click', function (event) { return __awaiter(void 0, void 0, void 0, function () {
-    var query;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                query = "PREFIX ifc: <http://ifcowl.openbimstandards.org/IFC2X3_Final#>\n\nSELECT DISTINCT ?class\nWHERE { \n    ?s a ?class\n}";
-                return [4 /*yield*/, executeQuery(query, ["class"], "Q5")];
-            case 1:
-                _a.sent();
-                return [2 /*return*/];
-        }
+        t1 = new Date();
+        triples = store.dump("text/turtle", undefined);
+        t2 = new Date();
+        appendToLog("Serialized results | ".concat(t2.getTime() - t1.getTime(), "ms"));
+        downloadStringAsFile(fileName, triples);
+        return [2 /*return*/];
     });
 }); });
 function executeQuery(query, variables, id) {
     return __awaiter(this, void 0, void 0, function () {
-        var t1, oxiBindings, t2, t3, n3Bindings, t4, strBindings, el;
+        var t1, bindings, t2, strBindings, el;
         return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    t1 = new Date();
-                    oxiBindings = oxiStore.query(query);
-                    t2 = new Date();
-                    appendToLog("Ran ".concat(id, " on Oxigraph | ").concat(oxiBindings.length, " results | ").concat(t2.getTime() - t1.getTime(), "ms"));
-                    t3 = new Date();
-                    return [4 /*yield*/, comunicaGetQuery(query, n3Store)];
-                case 1:
-                    n3Bindings = _a.sent();
-                    t4 = new Date();
-                    appendToLog("Ran ".concat(id, " on N3 | ").concat(n3Bindings.length, " results | ").concat(t4.getTime() - t3.getTime(), "ms"));
-                    strBindings = oxiBindings.map(function (b) {
-                        var str = "";
-                        variables.forEach(function (v) { return str += "".concat(b.get(v).value, " | "); });
-                        str = str.substring(0, str.length - 3);
-                        return str;
-                    });
-                    el = document.getElementById("query-result-time");
-                    if (el)
-                        el.innerHTML = "Results: ".concat(oxiBindings.length, " | Oxigraph: ").concat(t2.getTime() - t1.getTime(), "ms | N3: ").concat(t4.getTime() - t2.getTime(), "ms");
-                    setQueryAndResult(query, strBindings);
-                    return [2 /*return*/];
+            t1 = new Date();
+            bindings = store.query(query);
+            t2 = new Date();
+            appendToLog("Ran ".concat(id, " on Oxigraph | ").concat(bindings.length, " results | ").concat(t2.getTime() - t1.getTime(), "ms"));
+            strBindings = bindings.map(function (b) {
+                var str = "";
+                variables.forEach(function (v) { return str += "".concat(b.get(v).value, " | "); });
+                str = str.substring(0, str.length - 3);
+                return str;
+            });
+            el = document.getElementById("query-result-time");
+            if (el)
+                el.innerHTML = "Results: ".concat(bindings.length, " | ").concat(t2.getTime() - t1.getTime(), "ms");
+            setQueryAndResult(query, strBindings);
+            return [2 /*return*/];
+        });
+    });
+}
+function executeInsertQuery(query, id) {
+    return __awaiter(this, void 0, void 0, function () {
+        var t1, t2, el, queryElement;
+        return __generator(this, function (_a) {
+            t1 = new Date();
+            store.update(query);
+            t2 = new Date();
+            appendToLog("Ran ".concat(id, " | ").concat(t2.getTime() - t1.getTime(), "ms"));
+            el = document.getElementById("query-result-time");
+            if (el)
+                el.innerHTML = "Update took ".concat(t2.getTime() - t1.getTime(), "ms");
+            queryElement = document.getElementById("query");
+            if (queryElement) {
+                queryElement.style.visibility = "visible";
+                queryElement.innerHTML = "<pre>" + escapeHtml(query) + "</pre>";
             }
+            return [2 /*return*/];
         });
     });
 }
@@ -1506,8 +1417,7 @@ function initStore() {
                 case 0: return [4 /*yield*/, init()];
                 case 1:
                     _a.sent(); // Required to compile the WebAssembly.
-                    oxiStore = new Store();
-                    n3Store = new N3.Store();
+                    store = new Store();
                     return [2 /*return*/];
             }
         });

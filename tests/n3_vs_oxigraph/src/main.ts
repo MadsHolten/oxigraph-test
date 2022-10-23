@@ -1,7 +1,5 @@
 import init, * as oxigraph from 'oxigraph/web.js';
-import { comunicaGetQuery } from './helpers/comunica.js';
-import { getFileContent } from './helpers/file-read.js';
-import { n3LoadTTL } from './helpers/n3';
+import { appendToLog, comunicaGetQuery, getFileContent, n3LoadTTL } from './helpers';
 
 declare let N3; // Imported in index.html
 
@@ -157,16 +155,6 @@ function escapeHtml(unsafe: string)
          .replace(/>/g, "&gt;")
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#039;");
- }
-
-function appendToLog(text: string){
-    console.log(text);
-    const log = document.getElementById("log");
-    if(!log) return;
-    const entry = document.createElement('li');
-    entry.appendChild(document.createTextNode(text));
-    log.appendChild(entry);
 }
-
 
 initStore();

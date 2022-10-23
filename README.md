@@ -1,4 +1,5 @@
 [N3 vs Oxigraph test](https://madsholten.github.io/oxigraph-test/tests/n3_vs_oxigraph)
+[Update queries](https://madsholten.github.io/oxigraph-test/tests/oxigraph_update)
 
 The queries will work on LBD-triples that can be generated with [LD-BIM](https://ld-bim.web.app/).
 

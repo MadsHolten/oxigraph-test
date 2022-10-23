@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oxigraph update queries</title>
+    <link rel="stylesheet" type="text/css" href='styles.css' />
+</head>
+<body>
+
+    <h1>Oxigraph update queries</h1>
+
+    <p>The queries will work on LBD-triples that can be generated with <a href="https://ld-bim.web.app/">LD-BIM</a>.</p>
+
+    <p>For example:</p>
+    <ol>
+        <li>Open the <a href ="https://ld-bim.web.app/?duplex=true">Duplex test example</a></li>
+        <li>Open Data Source Overview modal by clicking the red graph icon</li>
+        <li>Click the kebab menu at "data-source-0"</li>
+        <li>Click download</li>
+    </ol>
+    
+    <input type="button" id="get_file" value="Load Triples" onclick="document.getElementById('fileInput').click()">
+    <input type="file" accept=".ttl" id="fileInput" style="display: none;">
+    <br>
+    
+    <div id="queries">
+        <input type="button" id="query_1" value="Turn spaces into giraffes">
+        <input type="button" id="query_2" value="Get giraffes">
+        <input type="button" id="download" value="Download result">
+        <p id="query-result-time"></p>
+    </div>
+
+    <!-- Executed query -->
+    <p id="query"></p>
+    <div id="query-results"></div>
+
+    <!-- Log -->
+    <ul id="log"></ul>
+
+    <script src="https://unpkg.com/n3/browser/n3.min.js"></script>
+    <script src="https://rdf.js.org/comunica-browser/versions/v2/engines/query-sparql/comunica-browser.js"></script>
+    <script type="module" src='build.js'></script>
+    <script>
+
+
+    </script>
+</body>
+</html>
