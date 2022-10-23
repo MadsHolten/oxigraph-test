@@ -65,12 +65,29 @@ document.getElementById('query_3')!.addEventListener('click', async (event: any)
 PREFIX ex: <https://ex.com/> 
 
 CONSTRUCT{
+    ?s a bot:Space .
     <<?s a bot:Space>> ex:created ?created
 }
 WHERE { 
+    ?s a bot:Space .
     <<?s a bot:Space>> ex:created ?created
 }`;
-    await executeConstructQuery(query, "Q3");
+    await executeConstructQuery(query, "text/turtle", "Q3");
+});
+
+document.getElementById('query_4')!.addEventListener('click', async (event: any) => {
+    const query = `PREFIX bot: <https://w3id.org/bot#> 
+PREFIX ex: <https://ex.com/> 
+
+CONSTRUCT{
+    ?s a bot:Space .
+    <<?s a bot:Space>> ex:created ?created
+}
+WHERE {
+    ?s a bot:Space .
+    <<?s a bot:Space>> ex:created ?created
+}`;
+    await executeConstructQuery(query, "application/ld+json", "Q4");
 });
 
 document.getElementById('download')!.addEventListener('click', async (event: any) => {
@@ -122,30 +139,50 @@ async function executeInsertQuery(query: string, id: string){
 
 }
 
-async function executeConstructQuery(query: string, id: string): Promise<any>{
+async function executeConstructQuery(query: string, mimetype: string, id: string): Promise<string>{
+
+    let qRes: string = "";
 
     const t1 = new Date();
     const quads = store.query(query);
     const t2 = new Date();
     appendToLog(`Ran ${id} | ${t2.getTime()-t1.getTime()}ms`);
 
-    // const tempStore = new oxigraph.Store(quads);
-    // const nquads: string = tempStore.dump("application/n-quads", undefined);
-    const doc = await jsonld.fromRDF(quads);
+    const el = document.getElementById("query-result-time");
+    if(el) el.innerHTML = `Quads: ${quads.length} | ${t2.getTime()-t1.getTime()}ms`;
+
+    if(mimetype == "text/turtle"){
+        const tempStore = new oxigraph.Store(quads);
+        qRes = tempStore.dump("text/turtle", undefined);
+    }
+
+    // Not working with RDF*
+    if(mimetype == "application/ld+json"){
+
+        // Serialize using [this algorithm](https://json-ld.github.io/json-ld-star/publications/2021-02-18.html#serialize-rdf-as-json-ld)
+        quads.forEach(quad => {
+            if(quad.subject.termType == "Quad"){
+                console.log("subject is quad");
+            }
+        })
+
+        const doc = await jsonld.fromRDF(quads);
+        qRes = JSON.stringify(doc, null, "   ");
+    }
 
     const queryElement = document.getElementById("query");
     if(queryElement){
         queryElement.style.visibility = "visible";
         queryElement.innerHTML = "<pre>" + escapeHtml(query) + "</pre>";
     }
-    
+
     const qResElement = document.getElementById("query-results");
     if(qResElement){
         qResElement.style.visibility = "visible";
-        qResElement.innerHTML = "<pre>" + escapeHtml(JSON.stringify(doc, null, "   ")) + "</pre>";
+        qResElement.innerHTML = "<pre>" + escapeHtml(qRes) + "</pre>";
     }
 
-    return doc;
+    return qRes;
 
 }
 

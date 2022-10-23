@@ -1362,8 +1362,21 @@ document.getElementById('query_3').addEventListener('click', function (event) { 
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                query = "PREFIX bot: <https://w3id.org/bot#> \nPREFIX ex: <https://ex.com/> \n\nCONSTRUCT{\n    <<?s a bot:Space>> ex:created ?created\n}\nWHERE { \n    <<?s a bot:Space>> ex:created ?created\n}";
-                return [4 /*yield*/, executeConstructQuery(query, "Q3")];
+                query = "PREFIX bot: <https://w3id.org/bot#> \nPREFIX ex: <https://ex.com/> \n\nCONSTRUCT{\n    ?s a bot:Space .\n    <<?s a bot:Space>> ex:created ?created\n}\nWHERE { \n    ?s a bot:Space .\n    <<?s a bot:Space>> ex:created ?created\n}";
+                return [4 /*yield*/, executeConstructQuery(query, "text/turtle", "Q3")];
+            case 1:
+                _a.sent();
+                return [2 /*return*/];
+        }
+    });
+}); });
+document.getElementById('query_4').addEventListener('click', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    var query;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                query = "PREFIX bot: <https://w3id.org/bot#> \nPREFIX ex: <https://ex.com/> \n\nCONSTRUCT{\n    ?s a bot:Space .\n    <<?s a bot:Space>> ex:created ?created\n}\nWHERE {\n    ?s a bot:Space .\n    <<?s a bot:Space>> ex:created ?created\n}";
+                return [4 /*yield*/, executeConstructQuery(query, "application/ld+json", "Q4")];
             case 1:
                 _a.sent();
                 return [2 /*return*/];
@@ -1423,19 +1436,37 @@ function executeInsertQuery(query, id) {
         });
     });
 }
-function executeConstructQuery(query, id) {
+function executeConstructQuery(query, mimetype, id) {
     return __awaiter(this, void 0, void 0, function () {
-        var t1, quads, t2, doc, queryElement, qResElement;
+        var qRes, t1, quads, t2, el, tempStore, doc, queryElement, qResElement;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    qRes = "";
                     t1 = new Date();
                     quads = store.query(query);
                     t2 = new Date();
                     appendToLog("Ran ".concat(id, " | ").concat(t2.getTime() - t1.getTime(), "ms"));
+                    el = document.getElementById("query-result-time");
+                    if (el)
+                        el.innerHTML = "Quads: ".concat(quads.length, " | ").concat(t2.getTime() - t1.getTime(), "ms");
+                    if (mimetype == "text/turtle") {
+                        tempStore = new Store(quads);
+                        qRes = tempStore.dump("text/turtle", undefined);
+                    }
+                    if (!(mimetype == "application/ld+json")) return [3 /*break*/, 2];
+                    // Serialize using [this algorithm](https://json-ld.github.io/json-ld-star/publications/2021-02-18.html#serialize-rdf-as-json-ld)
+                    quads.forEach(function (quad) {
+                        if (quad.subject.termType == "Quad") {
+                            console.log("subject is quad");
+                        }
+                    });
                     return [4 /*yield*/, jsonld.fromRDF(quads)];
                 case 1:
                     doc = _a.sent();
+                    qRes = JSON.stringify(doc, null, "   ");
+                    _a.label = 2;
+                case 2:
                     queryElement = document.getElementById("query");
                     if (queryElement) {
                         queryElement.style.visibility = "visible";
@@ -1444,9 +1475,9 @@ function executeConstructQuery(query, id) {
                     qResElement = document.getElementById("query-results");
                     if (qResElement) {
                         qResElement.style.visibility = "visible";
-                        qResElement.innerHTML = "<pre>" + escapeHtml(JSON.stringify(doc, null, "   ")) + "</pre>";
+                        qResElement.innerHTML = "<pre>" + escapeHtml(qRes) + "</pre>";
                     }
-                    return [2 /*return*/, doc];
+                    return [2 /*return*/, qRes];
             }
         });
     });
