@@ -1,6 +1,10 @@
-[N3 vs Oxigraph test](https://madsholten.github.io/oxigraph-test/tests/n3_vs_oxigraph)
-[Update queries](https://madsholten.github.io/oxigraph-test/tests/oxigraph_update)
-[RDF* test](https://madsholten.github.io/oxigraph-test/tests/oxigraph_rdfstar)
+## Oxigraph test
+
+This repo contains some small tests I did with running an in-memory Oxigraph triplestore in the browser. To test performance vs. N3 and in general, and to test its functionality.
+
+* [N3 vs Oxigraph test](https://madsholten.github.io/oxigraph-test/tests/n3_vs_oxigraph)
+* [Update queries](https://madsholten.github.io/oxigraph-test/tests/oxigraph_update)
+* [RDF* test](https://madsholten.github.io/oxigraph-test/tests/oxigraph_rdfstar)
 
 The queries will work on LBD-triples that can be generated with [LD-BIM](https://ld-bim.web.app/).
 
