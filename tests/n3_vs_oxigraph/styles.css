@@ -58,3 +58,7 @@ pre {
     margin: 2px;
     font-size: 0.6em;
 }
+ol li{
+    font-family: Consolas, monaco, monospace;
+    font-size: 0.9em;
+}

@@ -2,11 +2,11 @@ import init, * as oxigraph from 'oxigraph/web.js';
 import { comunicaGetQuery } from './helpers/comunica.js';
 import { getFileContent } from './helpers/file-read.js';
 import { n3LoadTTL } from './helpers/n3';
-import * as N3 from "./3rdparty/n3.min";
+
+declare let N3; // Imported in index.html
 
 const baseURI = "https://web-bim/resources/";
 
-let dataAvailable: boolean = false;
 let oxiStore: oxigraph.Store;
 let n3Store;
 
@@ -52,11 +52,12 @@ document.getElementById('query_2')!.addEventListener('click', async (event: any)
 PREFIX bot: <https://w3id.org/bot#> 
 PREFIX inst: <https://example.com/>
 
-SELECT ?space (group_concat(?adjEl) AS ?adjacent)
+SELECT ?space (group_concat(?adjElURI; separator=", ") AS ?adjacent)
 WHERE {
     ?space a bot:Space ; 
         bot:adjacentElement ?adjEl
-} GROUP BY ?space ?area`;
+    BIND(str(?adjEl) AS ?adjElURI)
+} GROUP BY ?space`;
     await executeQuery(query, ["space", "adjacent"], "Q2");
 });
 
@@ -70,6 +71,31 @@ WHERE {
 GROUP BY ?class 
 ORDER BY DESC(?instances)`;
     await executeQuery(query, ["class", "instances"], "Q3");
+});
+
+document.getElementById('query_4')!.addEventListener('click', async (event: any) => {
+    const query = `PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+PREFIX ex: <https://example.com/> 
+PREFIX ifc: <http://ifcowl.openbimstandards.org/IFC2X3_Final#>
+
+SELECT ?pset ?psetName (GROUP_CONCAT(?propName) AS ?properties)
+WHERE { 
+    ?pset a ifc:IfcPropertySet ;
+            rdfs:label ?psetName ;
+            ex:hasProperty ?property .
+    ?property rdfs:label ?propName
+} GROUP BY ?pset ?psetName`;
+    await executeQuery(query, ["pset", "psetName", "properties"], "Q4");
+});
+
+document.getElementById('query_5')!.addEventListener('click', async (event: any) => {
+    const query = `PREFIX ifc: <http://ifcowl.openbimstandards.org/IFC2X3_Final#>
+
+SELECT DISTINCT ?class
+WHERE { 
+    ?s a ?class
+}`;
+    await executeQuery(query, ["class"], "Q5");
 });
 
 async function executeQuery(query: string, variables: string[], id: string){
@@ -91,6 +117,10 @@ async function executeQuery(query: string, variables: string[], id: string){
         str = str.substring(0, str.length - 3);
         return str;
     })
+
+    const el = document.getElementById("query-result-time");
+    if(el) el.innerHTML = `Results: ${oxiBindings.length} | Oxigraph: ${t2.getTime()-t1.getTime()}ms | N3: ${t4.getTime()-t2.getTime()}ms`;
+
     setQueryAndResult(query, strBindings);
 
 }

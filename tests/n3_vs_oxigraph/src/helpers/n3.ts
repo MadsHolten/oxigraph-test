@@ -1,7 +1,7 @@
-import * as N3 from "../3rdparty/n3.min";
+declare let N3; // Imported in index.html
 
 export async function n3LoadTTL(triples: string, store: typeof N3.Store, batchSize: number = 1000): Promise<any>{
-    let currentBatch: N3.Quad[] = [];
+    let currentBatch: any[] = [];
     let promises: any = [];
     let counter = 0;
     return new Promise((resolve, reject) => {
